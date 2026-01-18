@@ -1,0 +1,162 @@
+version: '3.8'
+
+# =============================================================================
+# Antigravity ML Development Environment
+# =============================================================================
+# Three-tier architecture with health checks and failsafe support:
+#   1. ml-research   - Experimental new logic
+#   2. ml-redesign   - Hardening existing models
+#   3. app           - Application integration layer
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # ML Research Container
+  # ===========================================================================
+  ml-research:
+    build:
+      context: .
+      dockerfile: ml.Dockerfile
+      target: development
+    container_name: antigravity-research
+    volumes:
+      - ./src/ml/research:/app/src/ml/research
+      - ./models/staging:/app/models/staging
+      - ./scripts:/app/scripts:ro
+      - ./registry.log:/app/registry.log
+      - ./logs:/app/logs
+    environment:
+      ML_ENV: research
+      PYTHONUNBUFFERED: "1"
+    working_dir: /app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: ["python", "-c", "import time; print('Research container ready'); time.sleep(infinity)"]
+    restart: unless-stopped
+
+  # ===========================================================================
+  # ML Redesign Container
+  # ===========================================================================
+  ml-redesign:
+    build:
+      context: .
+      dockerfile: ml.Dockerfile
+      target: development
+    container_name: antigravity-redesign
+    volumes:
+      - ./src/ml/redesign:/app/src/ml/redesign
+      - ./models/staging:/app/models/staging
+      - ./scripts:/app/scripts:ro
+      - ./registry.log:/app/registry.log
+      - ./logs:/app/logs
+    environment:
+      ML_ENV: redesign
+      PYTHONUNBUFFERED: "1"
+    working_dir: /app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import torch; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: ["python", "-c", "import time; print('Redesign container ready'); time.sleep(infinity)"]
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Application Integration Container
+  # ===========================================================================
+  app:
+    build:
+      context: .
+      target: development
+    container_name: antigravity-app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./models/stable:/app/models/stable:ro
+      - ./logs:/app/logs
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+      MODELS_DIR: /app/models/stable
+    healthcheck:
+      test: ["CMD", "node", "-e", "console.log('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    command: npm run dev
+    depends_on:
+      ml-research:
+        condition: service_started
+      ml-redesign:
+        condition: service_started
+
+  # ===========================================================================
+  # Failsafe Monitor (The Orchestrator)
+  # ===========================================================================
+  failsafe:
+    image: docker:24-cli
+    container_name: antigravity-failsafe
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts:/scripts:ro
+      - ./logs:/logs
+      - ./registry.log:/registry.log
+      - ./.git:/repo/.git:ro
+    working_dir: /repo
+    environment:
+      COMPOSE_PROJECT_NAME: workspace
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Failsafe monitor starting..."
+        apk add --no-cache bash git
+        while true; do
+          # Check for unhealthy containers
+          UNHEALTHY=$$(docker ps --filter "health=unhealthy" --format "{{.Names}}" | grep antigravity || true)
+          if [ -n "$$UNHEALTHY" ]; then
+            echo "[FAILSAFE] Unhealthy detected: $$UNHEALTHY"
+            echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] [FAILSAFE] [ALERT] [$$UNHEALTHY] [UNHEALTHY]" >> /registry.log
+          fi
+          sleep 30
+        done
+    restart: unless-stopped
+    profiles:
+      - monitor
+
+  # ===========================================================================
+  # Model Promotion Service
+  # ===========================================================================
+  promoter:
+    build:
+      context: .
+      dockerfile: ml.Dockerfile
+      target: development
+    container_name: antigravity-promoter
+    volumes:
+      - ./models:/app/models
+      - ./scripts:/app/scripts
+      - ./registry.log:/app/registry.log
+      - ./logs:/app/logs
+    environment:
+      PYTHONUNBUFFERED: "1"
+    working_dir: /app
+    profiles:
+      - tools
+    command: ["bash", "-c", "echo 'Promoter ready. Run: ./scripts/promote.sh <model_id>'"]
+
+# =============================================================================
+# Shared Volumes
+# =============================================================================
+volumes:
+  models_staging:
+    driver: local
+  models_stable:
+    driver: local

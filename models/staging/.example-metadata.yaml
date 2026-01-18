@@ -1,0 +1,40 @@
+# Example Model Metadata
+# This file demonstrates the required metadata contract for Antigravity models.
+# Copy this template when creating new models.
+
+# =============================================================================
+# TIER 1 - REQUIRED (Blocking validation)
+# =============================================================================
+
+# Unique identifier - MUST match the folder name exactly
+model_id: example-transformer-v1.0.0
+
+# Git commit hash of the code that generated this model
+git_hash: abc123def456
+
+# ML framework used
+# Valid values: pytorch, tensorflow, onnx
+framework: pytorch
+
+# Minimum app version required to load this model (SemVer)
+min_app_version: 0.1.0
+
+# Required hardware for inference
+# Valid values: cpu, mps (Apple Silicon), cuda (NVIDIA GPU)
+required_hardware: cpu
+
+# =============================================================================
+# TIER 2 - OPTIONAL (Informational)
+# =============================================================================
+
+# Model performance metrics
+metrics:
+  accuracy: 0.95
+  f1_score: 0.93
+  inference_time_ms: 45
+
+# Human-readable notes about this model
+notes: "Baseline transformer trained on sample dataset. Ready for production testing."
+
+# Hash of the training dataset for reproducibility
+dataset_fingerprint: sha256:abc123...

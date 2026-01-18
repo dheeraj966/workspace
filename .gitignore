@@ -1,0 +1,73 @@
+# Dependencies
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-error.log*
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-workspace
+*.sublime-project
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker
+.docker-env
+
+# Python
+.venv/
+venv/
+env/
+*.pyc
+__pycache__/
+*.egg-info/
+.pytest_cache/
+*.egg
+dist/
+build/
+
+# =============================================================================
+# ML Model Artifacts
+# =============================================================================
+# Ignore model weights but keep directory structure
+models/staging/*
+!models/staging/.gitkeep
+!models/staging/.example-metadata.yaml
+models/stable/*
+!models/stable/.gitkeep
+
+# Model weight files (large binary files)
+*.pt
+*.pth
+*.onnx
+*.pb
+*.h5
+*.safetensors
+
+# Registry log (local state)
+registry.log
+
+# Failsafe logs
+logs/*
+!logs/.gitkeep

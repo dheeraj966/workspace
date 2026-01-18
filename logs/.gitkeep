@@ -1,0 +1,5 @@
+# Failsafe Logs Directory
+
+This directory stores logs from the Git-Backplane Failsafe system:
+
+- `failsafe.log` - Main log file with health check results and rollback events
