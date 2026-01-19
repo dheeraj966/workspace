@@ -18,6 +18,7 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+export PATH="$PROJECT_ROOT/tools/go/bin:$PATH"
 
 # Colors
 GREEN='\033[0;32m'
