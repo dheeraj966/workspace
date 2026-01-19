@@ -67,7 +67,34 @@ services:
     restart: unless-stopped
 
   # ===========================================================================
-  # Application Integration Container
+  # App v1: Ollama (Backend/Inference)
+  # ===========================================================================
+  # Source: src/apps/v1 (Cloned from ollama/ollama)
+  # Port: 11434
+  # ===========================================================================
+  app-v1:
+    build:
+      context: ./src/apps/development/v1
+      dockerfile: Dockerfile
+      args:
+        # Default to CPU build for compatibility unless GPU args provided
+        # Users can override this in .env or via shell vars
+        FLAVOR: linux/amd64
+    container_name: antigravity-app-v1
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./src/apps/development/v1:/go/src/github.com/ollama/ollama
+      - ./models/stable:/root/.ollama/models:ro # Mount models if needed
+    environment:
+      OLLAMA_HOST: "0.0.0.0"
+    restart: unless-stopped
+    # Use 'build' stage or similar if we want a dev env, 
+    # but the default Dockerfile produces a binary. 
+    # For now, we use the default build.
+
+  # ===========================================================================
+  # Application Integration Container (Node.js/Next.js Future)
   # ===========================================================================
   app:
     build:
