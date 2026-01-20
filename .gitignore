@@ -71,3 +71,4 @@ registry.log
 # Failsafe logs
 logs/*
 !logs/.gitkeep
+tools/miniconda/

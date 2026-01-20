@@ -15,6 +15,14 @@ export PATH="$PROJECT_ROOT/tools/go/bin:$PATH"
 
 echo "Using Go: $(go version)"
 
+# Kill existing instance if running
+echo "Checking for existing instances..."
+if pgrep -f "ollama serve" > /dev/null; then
+    echo -e "\033[0;33m⚠️  Found running instance. Killing...\033[0m"
+    pkill -f "ollama serve" || true
+    sleep 1
+fi
+
 cd "$APP_DIR"
 
 echo "Downloading dependencies..."
